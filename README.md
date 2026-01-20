@@ -1,6 +1,6 @@
 # @fhirfly/sdk
 
-Official FHIRfly SDK for Node.js - Healthcare reference data APIs.
+Official FHIRfly SDK for Node.js — typed access to healthcare reference data APIs (NDC, NPI, LOINC, RxNorm, ICD-10, CVX, MVX, FDA Labels).
 
 [![npm version](https://img.shields.io/npm/v/@fhirfly/sdk.svg)](https://www.npmjs.com/package/@fhirfly/sdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
@@ -35,6 +35,7 @@ console.log(npi.data.name);
 - **Response shapes**: compact, standard, or full detail levels
 - **Automatic retries** with exponential backoff
 - **Detailed error types** for proper error handling
+- **Designed for both human developers and programmatic agents**
 
 ## API Reference
 
@@ -74,6 +75,8 @@ for (const item of results.results) {
   }
 }
 ```
+
+Batch lookups return per-item results and never throw for individual misses.
 
 ### NPI (National Provider Identifiers)
 
@@ -191,6 +194,8 @@ try {
 | `ServerError` | 5xx | Server-side error |
 | `NetworkError` | - | Network connectivity issue |
 | `TimeoutError` | - | Request timed out |
+
+`RateLimitError` indicates short-term throttling; `QuotaExceededError` indicates monthly plan limits.
 
 ## Requirements
 
