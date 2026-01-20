@@ -1,20 +1,20 @@
-# @fhirfly/sdk
+# @fhirfly-io/terminology
 
 Official FHIRfly SDK for Node.js — typed access to healthcare reference data APIs (NDC, NPI, LOINC, RxNorm, ICD-10, CVX, MVX, FDA Labels).
 
-[![npm version](https://img.shields.io/npm/v/@fhirfly/sdk.svg)](https://www.npmjs.com/package/@fhirfly/sdk)
+[![npm version](https://img.shields.io/npm/v/@fhirfly-io/terminology.svg)](https://www.npmjs.com/package/@fhirfly-io/terminology)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 ## Installation
 
 ```bash
-npm install @fhirfly/sdk
+npm install @fhirfly-io/terminology
 ```
 
 ## Quick Start
 
 ```typescript
-import { Fhirfly } from "@fhirfly/sdk";
+import { Fhirfly } from "@fhirfly-io/terminology";
 
 const client = new Fhirfly({ apiKey: "your-api-key" });
 
@@ -167,7 +167,7 @@ import {
   NotFoundError,
   RateLimitError,
   AuthenticationError
-} from "@fhirfly/sdk";
+} from "@fhirfly-io/terminology";
 
 try {
   const ndc = await client.ndc.lookup("invalid-code");
