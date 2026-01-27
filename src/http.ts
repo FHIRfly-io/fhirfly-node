@@ -12,11 +12,109 @@ import {
 import type { LookupOptions } from "./types/common.js";
 
 /**
+ * OAuth2 token response from the token endpoint.
+ */
+interface TokenResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  scope?: string;
+}
+
+/**
+ * OAuth2 client credentials configuration.
+ */
+export interface OAuthCredentials {
+  clientId: string;
+  clientSecret: string;
+  tokenUrl: string;
+  scopes?: string[];
+}
+
+/**
+ * Manages OAuth2 access tokens with automatic refresh.
+ */
+export class TokenManager {
+  private readonly credentials: OAuthCredentials;
+  private accessToken: string | null = null;
+  private expiresAt = 0;
+  private refreshPromise: Promise<string> | null = null;
+
+  constructor(credentials: OAuthCredentials) {
+    this.credentials = credentials;
+  }
+
+  /**
+   * Get a valid access token, refreshing if needed.
+   * Deduplicates concurrent refresh calls.
+   */
+  async getToken(): Promise<string> {
+    if (this.accessToken && Date.now() < this.expiresAt) {
+      return this.accessToken;
+    }
+    if (this.refreshPromise) {
+      return this.refreshPromise;
+    }
+    this.refreshPromise = this.fetchToken();
+    try {
+      return await this.refreshPromise;
+    } finally {
+      this.refreshPromise = null;
+    }
+  }
+
+  /**
+   * Invalidate the cached token (e.g., after a 401 response).
+   */
+  invalidate(): void {
+    this.accessToken = null;
+    this.expiresAt = 0;
+  }
+
+  private async fetchToken(): Promise<string> {
+    const body = new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: this.credentials.clientId,
+      client_secret: this.credentials.clientSecret,
+    });
+    if (this.credentials.scopes?.length) {
+      body.set("scope", this.credentials.scopes.join(" "));
+    }
+
+    const response = await fetch(this.credentials.tokenUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body.toString(),
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      throw new AuthenticationError(
+        `OAuth2 token exchange failed (${response.status}): ${text}`
+      );
+    }
+
+    const data = (await response.json()) as TokenResponse;
+    this.accessToken = data.access_token;
+    // Refresh 60s before expiry
+    this.expiresAt = Date.now() + (data.expires_in - 60) * 1000;
+    return this.accessToken;
+  }
+}
+
+/**
+ * Authentication mode for the HTTP client.
+ */
+type AuthMode =
+  | { type: "api-key"; apiKey: string }
+  | { type: "oauth"; tokenManager: TokenManager };
+
+/**
  * HTTP client configuration.
  */
 export interface HttpClientConfig {
   baseUrl: string;
-  apiKey: string;
+  auth: AuthMode;
   timeout?: number;
   maxRetries?: number;
   retryDelay?: number;
@@ -36,12 +134,12 @@ interface HttpResponse<T> {
  * Internal HTTP client for making API requests.
  */
 export class HttpClient {
-  private readonly config: Required<HttpClientConfig>;
+  private readonly config: Required<Omit<HttpClientConfig, "auth">> & { auth: AuthMode };
 
   constructor(config: HttpClientConfig) {
     this.config = {
       baseUrl: config.baseUrl,
-      apiKey: config.apiKey,
+      auth: config.auth,
       timeout: config.timeout ?? 30000,
       maxRetries: config.maxRetries ?? 3,
       retryDelay: config.retryDelay ?? 1000,
@@ -140,12 +238,24 @@ export class HttpClient {
   }
 
   /**
+   * Get auth headers for the current request.
+   */
+  private async getAuthHeaders(): Promise<Record<string, string>> {
+    if (this.config.auth.type === "api-key") {
+      return { "x-api-key": this.config.auth.apiKey };
+    }
+    const token = await this.config.auth.tokenManager.getToken();
+    return { "Authorization": `Bearer ${token}` };
+  }
+
+  /**
    * Make an HTTP request with retries.
    */
   private async request<T>(
     method: "GET" | "POST",
     endpoint: string,
-    body?: unknown
+    body?: unknown,
+    isRetryAfter401 = false
   ): Promise<HttpResponse<T>> {
     const url = `${this.config.baseUrl}${endpoint}`;
     let lastError: Error | undefined;
@@ -158,10 +268,12 @@ export class HttpClient {
           this.config.timeout
         );
 
+        const authHeaders = await this.getAuthHeaders();
+
         const response = await fetch(url, {
           method,
           headers: {
-            "Authorization": `Bearer ${this.config.apiKey}`,
+            ...authHeaders,
             "Content-Type": "application/json",
             "User-Agent": this.config.userAgent,
             "Accept": "application/json",
@@ -173,6 +285,16 @@ export class HttpClient {
         clearTimeout(timeoutId);
 
         if (!response.ok) {
+          // On 401 with OAuth, invalidate token and retry once
+          if (
+            response.status === 401 &&
+            this.config.auth.type === "oauth" &&
+            !isRetryAfter401
+          ) {
+            this.config.auth.tokenManager.invalidate();
+            return this.request<T>(method, endpoint, body, true);
+          }
+
           // Don't retry client errors (except rate limits)
           if (response.status < 500 && response.status !== 429) {
             await this.parseErrorResponse(response, endpoint);

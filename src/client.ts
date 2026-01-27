@@ -1,4 +1,4 @@
-import { HttpClient, type HttpClientConfig } from "./http.js";
+import { HttpClient, TokenManager, type HttpClientConfig } from "./http.js";
 import { NdcEndpoint } from "./endpoints/ndc.js";
 import { NpiEndpoint } from "./endpoints/npi.js";
 import { RxNormEndpoint } from "./endpoints/rxnorm.js";
@@ -9,15 +9,9 @@ import { MvxEndpoint } from "./endpoints/mvx.js";
 import { FdaLabelsEndpoint } from "./endpoints/fda-labels.js";
 
 /**
- * Configuration options for the FHIRfly client.
+ * Base configuration options shared by all auth modes.
  */
-export interface FhirflyConfig {
-  /**
-   * Your FHIRfly API key.
-   * Get one at https://fhirfly.io/dashboard
-   */
-  apiKey: string;
-
+interface FhirflyBaseConfig {
   /**
    * Base URL for the API.
    * @default "https://api.fhirfly.io"
@@ -44,6 +38,55 @@ export interface FhirflyConfig {
 }
 
 /**
+ * Configuration using an API key (simple credentials).
+ */
+export interface FhirflyApiKeyConfig extends FhirflyBaseConfig {
+  /**
+   * Your FHIRfly API key.
+   * Get one at https://fhirfly.io/dashboard
+   */
+  apiKey: string;
+  clientId?: never;
+  clientSecret?: never;
+  tokenUrl?: never;
+  scopes?: never;
+}
+
+/**
+ * Configuration using OAuth2 client credentials (secure credentials).
+ */
+export interface FhirflyOAuthConfig extends FhirflyBaseConfig {
+  /**
+   * OAuth2 client ID from your secure credential.
+   */
+  clientId: string;
+
+  /**
+   * OAuth2 client secret from your secure credential.
+   */
+  clientSecret: string;
+
+  /**
+   * OAuth2 token endpoint URL.
+   * @default "{baseUrl}/oauth2/token"
+   */
+  tokenUrl?: string;
+
+  /**
+   * OAuth2 scopes to request.
+   */
+  scopes?: string[];
+
+  apiKey?: never;
+}
+
+/**
+ * Configuration options for the FHIRfly client.
+ * Provide either `apiKey` OR `clientId`+`clientSecret`, not both.
+ */
+export type FhirflyConfig = FhirflyApiKeyConfig | FhirflyOAuthConfig;
+
+/**
  * FHIRfly API client.
  *
  * Provides access to healthcare reference data including drug codes (NDC, RxNorm),
@@ -54,21 +97,18 @@ export interface FhirflyConfig {
  * ```ts
  * import { Fhirfly } from "@fhirfly/sdk";
  *
- * const client = new Fhirfly({ apiKey: "your-api-key" });
+ * // Option A: API key (simple)
+ * const client = new Fhirfly({ apiKey: "ffly_sk_live_..." });
+ *
+ * // Option B: Client credentials (secure)
+ * const client = new Fhirfly({
+ *   clientId: "ffly_client_...",
+ *   clientSecret: "ffly_secret_...",
+ * });
  *
  * // Look up a drug by NDC
  * const ndc = await client.ndc.lookup("0069-0151-01");
  * console.log(ndc.data.product_name); // "Lipitor"
- *
- * // Look up a provider by NPI
- * const npi = await client.npi.lookup("1234567890");
- * console.log(npi.data.name);
- *
- * // Batch lookups
- * const results = await client.ndc.lookupMany([
- *   "0069-0151-01",
- *   "0069-0151-02"
- * ]);
  * ```
  */
 export class Fhirfly {
@@ -117,23 +157,41 @@ export class Fhirfly {
   /**
    * Create a new FHIRfly client.
    *
-   * @param config - Client configuration
-   * @throws {Error} If apiKey is not provided
+   * @param config - Client configuration (API key or OAuth2 client credentials)
+   * @throws {Error} If neither apiKey nor clientId+clientSecret is provided
    */
   constructor(config: FhirflyConfig) {
-    if (!config.apiKey) {
+    const baseUrl = config.baseUrl ?? "https://api.fhirfly.io";
+
+    let httpConfig: HttpClientConfig;
+
+    if ("apiKey" in config && config.apiKey) {
+      httpConfig = {
+        baseUrl,
+        auth: { type: "api-key", apiKey: config.apiKey },
+        timeout: config.timeout,
+        maxRetries: config.maxRetries,
+        retryDelay: config.retryDelay,
+      };
+    } else if ("clientId" in config && config.clientId && config.clientSecret) {
+      const tokenManager = new TokenManager({
+        clientId: config.clientId,
+        clientSecret: config.clientSecret,
+        tokenUrl: config.tokenUrl ?? `${baseUrl}/oauth2/token`,
+        scopes: config.scopes,
+      });
+      httpConfig = {
+        baseUrl,
+        auth: { type: "oauth", tokenManager },
+        timeout: config.timeout,
+        maxRetries: config.maxRetries,
+        retryDelay: config.retryDelay,
+      };
+    } else {
       throw new Error(
-        "FHIRfly API key is required. Get one at https://fhirfly.io/dashboard"
+        "FHIRfly requires either an apiKey or clientId+clientSecret. Get credentials at https://fhirfly.io/dashboard"
       );
     }
-
-    const httpConfig: HttpClientConfig = {
-      baseUrl: config.baseUrl ?? "https://api.fhirfly.io",
-      apiKey: config.apiKey,
-      timeout: config.timeout,
-      maxRetries: config.maxRetries,
-      retryDelay: config.retryDelay,
-    };
 
     this.http = new HttpClient(httpConfig);
 

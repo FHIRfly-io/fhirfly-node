@@ -7,7 +7,10 @@
  */
 
 // Main client
-export { Fhirfly, type FhirflyConfig } from "./client.js";
+export { Fhirfly, type FhirflyConfig, type FhirflyApiKeyConfig, type FhirflyOAuthConfig } from "./client.js";
+
+// Auth utilities
+export { TokenManager } from "./http.js";
 
 // Errors
 export {
