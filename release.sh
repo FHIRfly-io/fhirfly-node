@@ -62,7 +62,7 @@ main() {
   git rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "Not inside a git repository."
 
   echo "==> Fetching latest from $REMOTE (including tags)..."
-  git fetch "$REMOTE" --tags
+  git fetch "$REMOTE" --tags --prune --force
 
   # Safety: clean working tree
   if ! is_clean_tree; then
