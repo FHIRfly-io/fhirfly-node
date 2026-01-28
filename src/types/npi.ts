@@ -83,3 +83,37 @@ export interface NpiFull extends NpiStandard {
  * NPI response type based on shape.
  */
 export type NpiData = NpiCompact | NpiStandard | NpiFull;
+
+/**
+ * NPI search parameters.
+ */
+export interface NpiSearchParams {
+  /** General text search */
+  q?: string;
+  /** Search by provider name */
+  name?: string;
+  /** Filter by first name (individuals only) */
+  first_name?: string;
+  /** Filter by last name (individuals only) */
+  last_name?: string;
+  /** Search by organization name */
+  organization?: string;
+  /** Filter by taxonomy code */
+  taxonomy?: string;
+  /** Search by specialty description */
+  specialty?: string;
+  /** Filter by state (2-letter code) */
+  state?: string;
+  /** Filter by city */
+  city?: string;
+  /** Filter by postal code */
+  postal_code?: string;
+  /** Filter by phone number */
+  phone?: string;
+  /** Filter by entity type */
+  entity_type?: "individual" | "organization";
+  /** Filter by active status */
+  active?: boolean;
+  /** Sort order: "relevance", "name", "location" */
+  sort?: "relevance" | "name" | "location";
+}

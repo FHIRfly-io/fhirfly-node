@@ -32,3 +32,19 @@ export interface CvxFull extends CvxStandard {
  * CVX response type based on shape.
  */
 export type CvxData = CvxCompact | CvxStandard | CvxFull;
+
+/**
+ * CVX search parameters.
+ */
+export interface CvxSearchParams {
+  /** General text search */
+  q?: string;
+  /** Filter by status: "active", "inactive" */
+  status?: string;
+  /** Filter by vaccine type (e.g., "mRNA", "live", "inactivated") */
+  vaccine_type?: string;
+  /** Filter for COVID-19 vaccines only */
+  is_covid_vaccine?: boolean;
+  /** Sort order: "relevance", "name", "code" */
+  sort?: "relevance" | "name" | "code";
+}

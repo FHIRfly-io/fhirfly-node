@@ -80,3 +80,60 @@ export interface BatchResponse<T> {
 export interface DisplayField {
   display?: string;
 }
+
+// ============================================================================
+// Search Types
+// ============================================================================
+
+/**
+ * Common options for all search methods.
+ */
+export interface SearchOptions {
+  /** Response detail level. Default: "compact" */
+  shape?: ResponseShape;
+  /** Include additional fields like pre-formatted display strings */
+  include?: IncludeOption[];
+  /** Results per page (1-100). Default: 20 */
+  limit?: number;
+  /** Page number (1-100). Default: 1 */
+  page?: number;
+}
+
+/**
+ * Facet counts in search results.
+ */
+export type SearchFacets = Record<string, Record<string, number>>;
+
+/**
+ * Legal metadata for search results.
+ */
+export interface SearchLegalInfo {
+  license: string;
+  source_name: string;
+  citation: string;
+  attribution_required: boolean;
+}
+
+/**
+ * Search response wrapper.
+ */
+export interface SearchResponse<T> {
+  /** Search result items */
+  items: T[];
+  /** Total number of matching results */
+  total: number;
+  /** Whether total was capped (e.g., at 10,000) */
+  total_capped: boolean;
+  /** Whether there are more results */
+  has_more: boolean;
+  /** Current page number */
+  page: number;
+  /** Results per page */
+  limit: number;
+  /** Facet counts for filtering */
+  facets: SearchFacets;
+  /** Legal and attribution metadata */
+  meta: {
+    legal: SearchLegalInfo;
+  };
+}

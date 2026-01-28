@@ -57,3 +57,43 @@ export interface NdcFull extends NdcStandard {
  * NDC response type based on shape.
  */
 export type NdcData = NdcCompact | NdcStandard | NdcFull;
+
+/**
+ * NDC search parameters.
+ */
+export interface NdcSearchParams {
+  /** General text search across product names */
+  q?: string;
+  /** Search by product name */
+  name?: string;
+  /** Search by brand name */
+  brand?: string;
+  /** Search by generic name */
+  generic?: string;
+  /** Search by active ingredient */
+  ingredient?: string;
+  /** Filter by strength (e.g., "200mg", "10mg/5ml") */
+  strength?: string;
+  /** Filter by dosage form (e.g., "TABLET", "CAPSULE") */
+  dosage_form?: string;
+  /** Filter by administration route */
+  route?: string;
+  /** Filter by labeler/manufacturer name */
+  labeler?: string;
+  /** Filter by product type: "otc", "rx", or "all" */
+  product_type?: "otc" | "rx" | "all";
+  /** Filter by DEA schedule: "ci", "cii", "ciii", "civ", "cv", "none" */
+  dea_schedule?: "ci" | "cii" | "ciii" | "civ" | "cv" | "none";
+  /** Filter by marketing category */
+  marketing_category?: string;
+  /** Filter by pharmacologic class */
+  pharm_class?: string;
+  /** Filter by active status */
+  is_active?: boolean;
+  /** Filter by RxNorm linkage */
+  has_rxcui?: boolean;
+  /** Filter by specific RxNorm CUI */
+  rxcui?: string;
+  /** Sort order: "relevance", "name", "labeler" */
+  sort?: "relevance" | "name" | "labeler";
+}

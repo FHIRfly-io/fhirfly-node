@@ -4,8 +4,10 @@ import type {
   BatchResponse,
   LookupOptions,
   BatchLookupOptions,
+  SearchOptions,
+  SearchResponse,
 } from "../types/common.js";
-import type { RxNormData } from "../types/rxnorm.js";
+import type { RxNormData, RxNormSearchParams } from "../types/rxnorm.js";
 
 /**
  * RxNorm API endpoint.
@@ -46,5 +48,35 @@ export class RxNormEndpoint {
       { codes: rxcuis },
       options
     );
+  }
+
+  /**
+   * Search for drugs in RxNorm.
+   *
+   * @param params - Search parameters (q, name, ingredient, brand, etc.)
+   * @param options - Pagination and response shape options
+   * @returns Search results with facets
+   *
+   * @example
+   * ```ts
+   * // Search by drug name
+   * const results = await client.rxnorm.search({ q: "lipitor" });
+   *
+   * // Search prescribable drugs by ingredient
+   * const results = await client.rxnorm.search({
+   *   ingredient: "metformin",
+   *   is_prescribable: true
+   * });
+   * ```
+   */
+  async search(
+    params: RxNormSearchParams,
+    options?: SearchOptions
+  ): Promise<SearchResponse<RxNormData>> {
+    return this.http.search<SearchResponse<RxNormData>>("/v1/rxnorm/search", {
+      ...params,
+      ...options,
+      include: options?.include?.join(","),
+    });
   }
 }

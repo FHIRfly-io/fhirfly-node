@@ -4,8 +4,10 @@ import type {
   BatchResponse,
   LookupOptions,
   BatchLookupOptions,
+  SearchOptions,
+  SearchResponse,
 } from "../types/common.js";
-import type { CvxData } from "../types/cvx.js";
+import type { CvxData, CvxSearchParams } from "../types/cvx.js";
 
 /**
  * CVX (Vaccine Codes) API endpoint.
@@ -46,5 +48,35 @@ export class CvxEndpoint {
       { codes: cvxCodes },
       options
     );
+  }
+
+  /**
+   * Search for vaccine codes.
+   *
+   * @param params - Search parameters (q, status, vaccine_type, is_covid_vaccine)
+   * @param options - Pagination and response shape options
+   * @returns Search results with facets
+   *
+   * @example
+   * ```ts
+   * // Search for flu vaccines
+   * const results = await client.cvx.search({ q: "influenza" });
+   *
+   * // Find all COVID-19 vaccines
+   * const results = await client.cvx.search({
+   *   is_covid_vaccine: true,
+   *   status: "active"
+   * });
+   * ```
+   */
+  async search(
+    params: CvxSearchParams,
+    options?: SearchOptions
+  ): Promise<SearchResponse<CvxData>> {
+    return this.http.search<SearchResponse<CvxData>>("/v1/cvx/search", {
+      ...params,
+      ...options,
+      include: options?.include?.join(","),
+    });
   }
 }

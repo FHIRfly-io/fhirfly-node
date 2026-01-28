@@ -57,3 +57,29 @@ export interface LoincFull extends LoincStandard {
  * LOINC response type based on shape.
  */
 export type LoincData = LoincCompact | LoincStandard | LoincFull;
+
+/**
+ * LOINC search parameters.
+ */
+export interface LoincSearchParams {
+  /** General text search */
+  q?: string;
+  /** Search by component name */
+  component?: string;
+  /** Filter by LOINC class (e.g., "CHEM", "HEM/BC") */
+  class?: string;
+  /** Filter by specimen/system type (e.g., "Bld", "Ser", "Urine") */
+  system?: string;
+  /** Filter by property */
+  property?: string;
+  /** Filter by scale type: "Qn", "Ord", "Nom", "Nar", etc. */
+  scale?: string;
+  /** Filter by method */
+  method?: string;
+  /** Filter by order/observation type: "Order", "Observation", "Both" */
+  order_obs?: string;
+  /** Filter by status: "ACTIVE", "DEPRECATED", "DISCOURAGED", etc. */
+  status?: string;
+  /** Sort order: "relevance", "name", "code" */
+  sort?: "relevance" | "name" | "code";
+}

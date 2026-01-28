@@ -168,6 +168,30 @@ export class HttpClient {
   }
 
   /**
+   * Build query string from search params object.
+   */
+  buildSearchQueryString(params: Record<string, unknown>): string {
+    const searchParams = new URLSearchParams();
+
+    for (const [key, value] of Object.entries(params)) {
+      if (value === undefined || value === null) continue;
+
+      if (typeof value === "boolean") {
+        searchParams.set(key, value.toString());
+      } else if (typeof value === "number") {
+        searchParams.set(key, value.toString());
+      } else if (typeof value === "string" && value.length > 0) {
+        searchParams.set(key, value);
+      } else if (Array.isArray(value) && value.length > 0) {
+        searchParams.set(key, value.join(","));
+      }
+    }
+
+    const queryString = searchParams.toString();
+    return queryString ? `?${queryString}` : "";
+  }
+
+  /**
    * Parse error response from API.
    */
   private async parseErrorResponse(
@@ -368,6 +392,15 @@ export class HttpClient {
   async post<T>(endpoint: string, body: unknown, options?: LookupOptions): Promise<T> {
     const queryString = this.buildQueryString(options);
     const response = await this.request<T>("POST", `${endpoint}${queryString}`, body);
+    return response.data;
+  }
+
+  /**
+   * Make a GET request with search parameters.
+   */
+  async search<T>(endpoint: string, params: Record<string, unknown>): Promise<T> {
+    const queryString = this.buildSearchQueryString(params);
+    const response = await this.request<T>("GET", `${endpoint}${queryString}`);
     return response.data;
   }
 }

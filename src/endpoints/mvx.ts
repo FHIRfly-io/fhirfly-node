@@ -4,8 +4,10 @@ import type {
   BatchResponse,
   LookupOptions,
   BatchLookupOptions,
+  SearchOptions,
+  SearchResponse,
 } from "../types/common.js";
-import type { MvxData } from "../types/mvx.js";
+import type { MvxData, MvxSearchParams } from "../types/mvx.js";
 
 /**
  * MVX (Vaccine Manufacturer Codes) API endpoint.
@@ -46,5 +48,32 @@ export class MvxEndpoint {
       { codes: mvxCodes },
       options
     );
+  }
+
+  /**
+   * Search for vaccine manufacturers.
+   *
+   * @param params - Search parameters (q, status)
+   * @param options - Pagination and response shape options
+   * @returns Search results with facets
+   *
+   * @example
+   * ```ts
+   * // Search by name
+   * const results = await client.mvx.search({ q: "pfizer" });
+   *
+   * // List all active manufacturers
+   * const results = await client.mvx.search({ status: "active" });
+   * ```
+   */
+  async search(
+    params: MvxSearchParams,
+    options?: SearchOptions
+  ): Promise<SearchResponse<MvxData>> {
+    return this.http.search<SearchResponse<MvxData>>("/v1/mvx/search", {
+      ...params,
+      ...options,
+      include: options?.include?.join(","),
+    });
   }
 }

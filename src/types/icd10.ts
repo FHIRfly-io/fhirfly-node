@@ -54,3 +54,31 @@ export interface Icd10Full extends Icd10Standard {
  * ICD-10 response type based on shape.
  */
 export type Icd10Data = Icd10Compact | Icd10Standard | Icd10Full;
+
+/**
+ * ICD-10 search parameters.
+ */
+export interface Icd10SearchParams {
+  /** General text search */
+  q?: string;
+  /** Filter by code system: "CM" (diagnosis) or "PCS" (procedure) */
+  code_system?: "CM" | "PCS";
+  /** Filter by chapter (CM only) */
+  chapter?: string;
+  /** Filter by block (CM only) */
+  block?: string;
+  /** Filter by billable codes only */
+  billable?: boolean;
+  /** Filter by section (PCS only) */
+  section?: string;
+  /** Filter by body system (PCS only) */
+  body_system?: string;
+  /** Filter by root operation (PCS only) */
+  root_operation?: string;
+  /** Filter by approach (PCS only) */
+  approach?: string;
+  /** Filter by status */
+  status?: string;
+  /** Sort order: "relevance", "code", "display" */
+  sort?: "relevance" | "code" | "display";
+}

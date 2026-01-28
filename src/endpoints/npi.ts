@@ -4,8 +4,10 @@ import type {
   BatchResponse,
   LookupOptions,
   BatchLookupOptions,
+  SearchOptions,
+  SearchResponse,
 } from "../types/common.js";
-import type { NpiData } from "../types/npi.js";
+import type { NpiData, NpiSearchParams } from "../types/npi.js";
 
 /**
  * NPI (National Provider Identifier) API endpoint.
@@ -54,5 +56,38 @@ export class NpiEndpoint {
       { codes: npis },
       options
     );
+  }
+
+  /**
+   * Search for healthcare providers.
+   *
+   * @param params - Search parameters (q, name, specialty, state, etc.)
+   * @param options - Pagination and response shape options
+   * @returns Search results with facets
+   *
+   * @example
+   * ```ts
+   * // Search by name
+   * const results = await client.npi.search({ q: "smith" });
+   *
+   * // Search with filters
+   * const results = await client.npi.search({
+   *   specialty: "cardiology",
+   *   state: "CA",
+   *   entity_type: "individual"
+   * });
+   *
+   * console.log(`Found ${results.total} providers`);
+   * ```
+   */
+  async search(
+    params: NpiSearchParams,
+    options?: SearchOptions
+  ): Promise<SearchResponse<NpiData>> {
+    return this.http.search<SearchResponse<NpiData>>("/v1/npi/search", {
+      ...params,
+      ...options,
+      include: options?.include?.join(","),
+    });
   }
 }

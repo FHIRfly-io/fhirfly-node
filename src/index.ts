@@ -39,6 +39,11 @@ export type {
   BatchResultItem,
   BatchResponse,
   DisplayField,
+  // Search types
+  SearchOptions,
+  SearchFacets,
+  SearchLegalInfo,
+  SearchResponse,
   // NDC
   ActiveIngredient,
   NdcPackaging,
@@ -46,6 +51,7 @@ export type {
   NdcStandard,
   NdcFull,
   NdcData,
+  NdcSearchParams,
   // NPI
   NpiAddress,
   NpiTaxonomy,
@@ -54,36 +60,43 @@ export type {
   NpiStandard,
   NpiFull,
   NpiData,
+  NpiSearchParams,
   // RxNorm
   RxTermType,
   RxNormCompact,
   RxNormStandard,
   RxNormFull,
   RxNormData,
+  RxNormSearchParams,
   // LOINC
   LoincCompact,
   LoincStandard,
   LoincFull,
   LoincData,
+  LoincSearchParams,
   // ICD-10
   Icd10Type,
   Icd10Compact,
   Icd10Standard,
   Icd10Full,
   Icd10Data,
+  Icd10SearchParams,
   // CVX
   CvxCompact,
   CvxStandard,
   CvxFull,
   CvxData,
+  CvxSearchParams,
   // MVX
   MvxCompact,
   MvxStandard,
   MvxFull,
   MvxData,
+  MvxSearchParams,
   // FDA Labels
   FdaLabelCompact,
   FdaLabelStandard,
   FdaLabelFull,
   FdaLabelData,
+  FdaLabelSearchParams,
 } from "./types/index.js";

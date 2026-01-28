@@ -10,6 +10,11 @@ export type {
   BatchResultItem,
   BatchResponse,
   DisplayField,
+  // Search types
+  SearchOptions,
+  SearchFacets,
+  SearchLegalInfo,
+  SearchResponse,
 } from "./common.js";
 
 // NDC types
@@ -20,6 +25,7 @@ export type {
   NdcStandard,
   NdcFull,
   NdcData,
+  NdcSearchParams,
 } from "./ndc.js";
 
 // NPI types
@@ -31,6 +37,7 @@ export type {
   NpiStandard,
   NpiFull,
   NpiData,
+  NpiSearchParams,
 } from "./npi.js";
 
 // RxNorm types
@@ -40,6 +47,7 @@ export type {
   RxNormStandard,
   RxNormFull,
   RxNormData,
+  RxNormSearchParams,
 } from "./rxnorm.js";
 
 // LOINC types
@@ -48,6 +56,7 @@ export type {
   LoincStandard,
   LoincFull,
   LoincData,
+  LoincSearchParams,
 } from "./loinc.js";
 
 // ICD-10 types
@@ -57,6 +66,7 @@ export type {
   Icd10Standard,
   Icd10Full,
   Icd10Data,
+  Icd10SearchParams,
 } from "./icd10.js";
 
 // CVX types
@@ -65,6 +75,7 @@ export type {
   CvxStandard,
   CvxFull,
   CvxData,
+  CvxSearchParams,
 } from "./cvx.js";
 
 // MVX types
@@ -73,6 +84,7 @@ export type {
   MvxStandard,
   MvxFull,
   MvxData,
+  MvxSearchParams,
 } from "./mvx.js";
 
 // FDA Labels types
@@ -81,4 +93,5 @@ export type {
   FdaLabelStandard,
   FdaLabelFull,
   FdaLabelData,
+  FdaLabelSearchParams,
 } from "./fda-labels.js";

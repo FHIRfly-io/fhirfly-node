@@ -73,3 +73,31 @@ export interface RxNormFull extends RxNormStandard {
  * RxNorm response type based on shape.
  */
 export type RxNormData = RxNormCompact | RxNormStandard | RxNormFull;
+
+/**
+ * RxNorm search parameters.
+ */
+export interface RxNormSearchParams {
+  /** General text search */
+  q?: string;
+  /** Search by drug name */
+  name?: string;
+  /** Search by ingredient name */
+  ingredient?: string;
+  /** Search by brand name */
+  brand?: string;
+  /** Filter by term type(s), comma-separated (e.g., "SCD,SBD") */
+  tty?: string;
+  /** Filter by prescribable status */
+  is_prescribable?: boolean;
+  /** Filter by status: "active", "removed", "remapped", "obsolete" */
+  status?: string;
+  /** Filter by semantic type */
+  semantic_type?: string;
+  /** Filter by NDC linkage */
+  has_ndc?: boolean;
+  /** Filter by specific NDC */
+  ndc?: string;
+  /** Sort order: "relevance", "name" */
+  sort?: "relevance" | "name";
+}

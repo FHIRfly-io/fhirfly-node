@@ -4,8 +4,10 @@ import type {
   BatchResponse,
   LookupOptions,
   BatchLookupOptions,
+  SearchOptions,
+  SearchResponse,
 } from "../types/common.js";
-import type { FdaLabelData } from "../types/fda-labels.js";
+import type { FdaLabelData, FdaLabelSearchParams } from "../types/fda-labels.js";
 
 /**
  * FDA Labels API endpoint.
@@ -63,5 +65,41 @@ export class FdaLabelsEndpoint {
       { codes: setIds },
       options
     );
+  }
+
+  /**
+   * Search for FDA drug labels.
+   *
+   * @param params - Search parameters (q, name, brand, substance, manufacturer, etc.)
+   * @param options - Pagination and response shape options
+   * @returns Search results with facets
+   *
+   * @example
+   * ```ts
+   * // Search by drug name
+   * const results = await client.fdaLabels.search({ q: "advil" });
+   *
+   * // Search OTC pain relievers
+   * const results = await client.fdaLabels.search({
+   *   substance: "acetaminophen",
+   *   product_type: "otc"
+   * });
+   *
+   * // Search by manufacturer
+   * const results = await client.fdaLabels.search({
+   *   manufacturer: "pfizer",
+   *   product_type: "rx"
+   * });
+   * ```
+   */
+  async search(
+    params: FdaLabelSearchParams,
+    options?: SearchOptions
+  ): Promise<SearchResponse<FdaLabelData>> {
+    return this.http.search<SearchResponse<FdaLabelData>>("/v1/fda-label/search", {
+      ...params,
+      ...options,
+      include: options?.include?.join(","),
+    });
   }
 }

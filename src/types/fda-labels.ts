@@ -51,3 +51,39 @@ export interface FdaLabelFull extends FdaLabelStandard {
  * FDA Label response type based on shape.
  */
 export type FdaLabelData = FdaLabelCompact | FdaLabelStandard | FdaLabelFull;
+
+/**
+ * FDA Label search parameters.
+ */
+export interface FdaLabelSearchParams {
+  /** General text search */
+  q?: string;
+  /** Search by product name */
+  name?: string;
+  /** Search by brand name */
+  brand?: string;
+  /** Search by generic name */
+  generic?: string;
+  /** Search by active substance/ingredient */
+  substance?: string;
+  /** Search by manufacturer name */
+  manufacturer?: string;
+  /** Filter by product type: "otc", "rx", "cellular" */
+  product_type?: "otc" | "rx" | "cellular";
+  /** Filter by administration route */
+  route?: string;
+  /** Filter by pharmacologic class */
+  pharm_class?: string;
+  /** Filter by RxNorm linkage */
+  has_rxcui?: boolean;
+  /** Filter by specific RxCUI */
+  rxcui?: string;
+  /** Filter by specific NDC */
+  ndc?: string;
+  /** Filter by FDA application number */
+  application_number?: string;
+  /** Filter for current labels only (default: true) */
+  is_current?: boolean;
+  /** Sort order: "relevance", "name", "manufacturer" */
+  sort?: "relevance" | "name" | "manufacturer";
+}

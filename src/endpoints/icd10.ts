@@ -4,8 +4,10 @@ import type {
   BatchResponse,
   LookupOptions,
   BatchLookupOptions,
+  SearchOptions,
+  SearchResponse,
 } from "../types/common.js";
-import type { Icd10Data } from "../types/icd10.js";
+import type { Icd10Data, Icd10SearchParams } from "../types/icd10.js";
 
 /**
  * ICD-10 API endpoint.
@@ -81,5 +83,39 @@ export class Icd10Endpoint {
       { codes },
       options
     );
+  }
+
+  /**
+   * Search for ICD-10 codes (both CM and PCS).
+   *
+   * @param params - Search parameters (q, code_system, chapter, billable, etc.)
+   * @param options - Pagination and response shape options
+   * @returns Search results with facets
+   *
+   * @example
+   * ```ts
+   * // Search diagnosis codes
+   * const results = await client.icd10.search({
+   *   q: "diabetes",
+   *   code_system: "CM",
+   *   billable: true
+   * });
+   *
+   * // Search procedure codes
+   * const results = await client.icd10.search({
+   *   q: "bypass",
+   *   code_system: "PCS"
+   * });
+   * ```
+   */
+  async search(
+    params: Icd10SearchParams,
+    options?: SearchOptions
+  ): Promise<SearchResponse<Icd10Data>> {
+    return this.http.search<SearchResponse<Icd10Data>>("/v1/icd10/search", {
+      ...params,
+      ...options,
+      include: options?.include?.join(","),
+    });
   }
 }

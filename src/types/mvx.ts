@@ -31,3 +31,15 @@ export interface MvxFull extends MvxStandard {
  * MVX response type based on shape.
  */
 export type MvxData = MvxCompact | MvxStandard | MvxFull;
+
+/**
+ * MVX search parameters.
+ */
+export interface MvxSearchParams {
+  /** General text search */
+  q?: string;
+  /** Filter by status: "active", "inactive" */
+  status?: string;
+  /** Sort order: "relevance", "name", "code" */
+  sort?: "relevance" | "name" | "code";
+}

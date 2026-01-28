@@ -4,8 +4,10 @@ import type {
   BatchResponse,
   LookupOptions,
   BatchLookupOptions,
+  SearchOptions,
+  SearchResponse,
 } from "../types/common.js";
-import type { NdcData } from "../types/ndc.js";
+import type { NdcData, NdcSearchParams } from "../types/ndc.js";
 
 /**
  * NDC (National Drug Code) API endpoint.
@@ -63,5 +65,41 @@ export class NdcEndpoint {
       { codes },
       options
     );
+  }
+
+  /**
+   * Search for NDC products.
+   *
+   * @param params - Search parameters (q, name, brand, ingredient, etc.)
+   * @param options - Pagination and response shape options
+   * @returns Search results with facets
+   *
+   * @example
+   * ```ts
+   * // Search by drug name
+   * const results = await client.ndc.search({ q: "advil" });
+   *
+   * // Search with filters
+   * const results = await client.ndc.search({
+   *   ingredient: "ibuprofen",
+   *   dosage_form: "TABLET",
+   *   product_type: "otc"
+   * });
+   *
+   * console.log(`Found ${results.total} products`);
+   * for (const item of results.items) {
+   *   console.log(item.product_name);
+   * }
+   * ```
+   */
+  async search(
+    params: NdcSearchParams,
+    options?: SearchOptions
+  ): Promise<SearchResponse<NdcData>> {
+    return this.http.search<SearchResponse<NdcData>>("/v1/ndc/search", {
+      ...params,
+      ...options,
+      include: options?.include?.join(","),
+    });
   }
 }

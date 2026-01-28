@@ -4,8 +4,10 @@ import type {
   BatchResponse,
   LookupOptions,
   BatchLookupOptions,
+  SearchOptions,
+  SearchResponse,
 } from "../types/common.js";
-import type { LoincData } from "../types/loinc.js";
+import type { LoincData, LoincSearchParams } from "../types/loinc.js";
 
 /**
  * LOINC API endpoint.
@@ -46,5 +48,36 @@ export class LoincEndpoint {
       { codes: loincNums },
       options
     );
+  }
+
+  /**
+   * Search for LOINC codes.
+   *
+   * @param params - Search parameters (q, component, class, system, etc.)
+   * @param options - Pagination and response shape options
+   * @returns Search results with facets
+   *
+   * @example
+   * ```ts
+   * // Search by term
+   * const results = await client.loinc.search({ q: "glucose" });
+   *
+   * // Search blood chemistry tests
+   * const results = await client.loinc.search({
+   *   class: "CHEM",
+   *   system: "Bld",
+   *   scale: "Qn"
+   * });
+   * ```
+   */
+  async search(
+    params: LoincSearchParams,
+    options?: SearchOptions
+  ): Promise<SearchResponse<LoincData>> {
+    return this.http.search<SearchResponse<LoincData>>("/v1/loinc/search", {
+      ...params,
+      ...options,
+      include: options?.include?.join(","),
+    });
   }
 }
