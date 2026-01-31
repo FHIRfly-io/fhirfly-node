@@ -32,7 +32,7 @@ function apiResponse<T>(data: T) {
   });
 }
 
-function batchResponse<T>(results: Array<{ code: string; found: boolean; data?: T }>) {
+function batchResponse<T>(results: Array<{ input: string; status: "ok" | "not_found"; data?: T }>) {
   return jsonResponse({
     results,
     meta: {
@@ -40,8 +40,8 @@ function batchResponse<T>(results: Array<{ code: string; found: boolean; data?: 
       shape: "standard",
       api_version: "1.0",
       total: results.length,
-      found: results.filter((r) => r.found).length,
-      not_found: results.filter((r) => !r.found).length,
+      found: results.filter((r) => r.status === "ok").length,
+      not_found: results.filter((r) => r.status === "not_found").length,
     },
   });
 }
@@ -152,7 +152,7 @@ describe("Endpoint lookup methods", () => {
     describe("lookupMany", () => {
       it("makes POST request to batch endpoint", async () => {
         mockFetch.mockResolvedValueOnce(
-          batchResponse([{ code: "123", found: true, data: { ndc: "123" } }])
+          batchResponse([{ input: "123", status: "ok", data: { ndc: "123" } }])
         );
 
         await client.ndc.lookupMany(["123", "456"]);
@@ -184,16 +184,16 @@ describe("Endpoint lookup methods", () => {
       it("returns batch response with found and not_found counts", async () => {
         mockFetch.mockResolvedValueOnce(
           batchResponse([
-            { code: "123", found: true, data: { ndc: "123" } },
-            { code: "456", found: false, error: "Not found" },
+            { input: "123", status: "ok", data: { ndc: "123" } },
+            { input: "456", status: "not_found" },
           ])
         );
 
         const result = await client.ndc.lookupMany(["123", "456"]);
 
         expect(result.results).toHaveLength(2);
-        expect(result.results[0]!.found).toBe(true);
-        expect(result.results[1]!.found).toBe(false);
+        expect(result.results[0]!.status).toBe("ok");
+        expect(result.results[1]!.status).toBe("not_found");
         expect(result.meta.found).toBe(1);
         expect(result.meta.not_found).toBe(1);
       });
@@ -246,7 +246,7 @@ describe("Endpoint lookup methods", () => {
         expect(opts.method).toBe("POST");
 
         const body = JSON.parse(opts.body);
-        expect(body.codes).toEqual(["1234567890", "0987654321"]);
+        expect(body.npis).toEqual(["1234567890", "0987654321"]);
       });
     });
   });
@@ -360,8 +360,8 @@ describe("Endpoint lookup methods", () => {
   // ICD-10 Endpoint
   // ===========================================================================
   describe("ICD-10 endpoint", () => {
-    describe("lookupCm", () => {
-      it("makes GET request to CM endpoint", async () => {
+    describe("lookup", () => {
+      it("makes GET request to correct URL", async () => {
         mockFetch.mockResolvedValueOnce(
           apiResponse({
             code: "E11.9",
@@ -370,23 +370,23 @@ describe("Endpoint lookup methods", () => {
           })
         );
 
-        await client.icd10.lookupCm("E11.9");
+        await client.icd10.lookup("E11.9");
 
         const [url] = mockFetch.mock.calls[0]!;
-        expect(url).toBe("https://api.fhirfly.io/v1/icd10/cm/E11.9");
+        expect(url).toBe("https://api.fhirfly.io/v1/icd10/E11.9");
       });
 
       it("encodes dots in ICD-10 codes", async () => {
         mockFetch.mockResolvedValueOnce(apiResponse({ code: "E11.9" }));
 
-        await client.icd10.lookupCm("E11.9");
+        await client.icd10.lookup("E11.9");
 
         const [url] = mockFetch.mock.calls[0]!;
         // Dots may or may not be encoded depending on implementation
         expect(url).toContain("E11");
       });
 
-      it("returns diagnosis data", async () => {
+      it("returns diagnosis data (CM code)", async () => {
         mockFetch.mockResolvedValueOnce(
           apiResponse({
             code: "E11.9",
@@ -397,30 +397,13 @@ describe("Endpoint lookup methods", () => {
           })
         );
 
-        const result = await client.icd10.lookupCm("E11.9");
+        const result = await client.icd10.lookup("E11.9");
 
         expect(result.data.code).toBe("E11.9");
         expect(result.data.type).toBe("cm");
       });
-    });
 
-    describe("lookupPcs", () => {
-      it("makes GET request to PCS endpoint", async () => {
-        mockFetch.mockResolvedValueOnce(
-          apiResponse({
-            code: "0BJ08ZZ",
-            type: "pcs",
-            description: "Inspection of Tracheobronchial Tree",
-          })
-        );
-
-        await client.icd10.lookupPcs("0BJ08ZZ");
-
-        const [url] = mockFetch.mock.calls[0]!;
-        expect(url).toBe("https://api.fhirfly.io/v1/icd10/pcs/0BJ08ZZ");
-      });
-
-      it("returns procedure data", async () => {
+      it("returns procedure data (PCS code)", async () => {
         mockFetch.mockResolvedValueOnce(
           apiResponse({
             code: "0BJ08ZZ",
@@ -431,32 +414,21 @@ describe("Endpoint lookup methods", () => {
           })
         );
 
-        const result = await client.icd10.lookupPcs("0BJ08ZZ");
+        const result = await client.icd10.lookup("0BJ08ZZ");
 
         expect(result.data.code).toBe("0BJ08ZZ");
         expect(result.data.type).toBe("pcs");
       });
     });
 
-    describe("lookupCmMany", () => {
-      it("makes POST request to CM batch endpoint", async () => {
+    describe("lookupMany", () => {
+      it("makes POST request to batch endpoint", async () => {
         mockFetch.mockResolvedValueOnce(batchResponse([]));
 
-        await client.icd10.lookupCmMany(["E11.9", "I10"]);
+        await client.icd10.lookupMany(["E11.9", "I10", "0BJ08ZZ"]);
 
         const [url] = mockFetch.mock.calls[0]!;
-        expect(url).toBe("https://api.fhirfly.io/v1/icd10/cm/_batch");
-      });
-    });
-
-    describe("lookupPcsMany", () => {
-      it("makes POST request to PCS batch endpoint", async () => {
-        mockFetch.mockResolvedValueOnce(batchResponse([]));
-
-        await client.icd10.lookupPcsMany(["0BJ08ZZ"]);
-
-        const [url] = mockFetch.mock.calls[0]!;
-        expect(url).toBe("https://api.fhirfly.io/v1/icd10/pcs/_batch");
+        expect(url).toBe("https://api.fhirfly.io/v1/icd10/_batch");
       });
     });
   });
@@ -573,7 +545,7 @@ describe("Endpoint lookup methods", () => {
         await client.fdaLabels.lookup("abc123-def456");
 
         const [url] = mockFetch.mock.calls[0]!;
-        expect(url).toBe("https://api.fhirfly.io/v1/fda-labels/abc123-def456");
+        expect(url).toBe("https://api.fhirfly.io/v1/fda-label/abc123-def456");
       });
 
       it("returns label data", async () => {
@@ -591,10 +563,8 @@ describe("Endpoint lookup methods", () => {
         expect(result.data.set_id).toBe("abc123");
         expect(result.data.product_name).toBe("TYLENOL Extra Strength");
       });
-    });
 
-    describe("lookupByNdc", () => {
-      it("makes GET request to NDC lookup endpoint", async () => {
+      it("accepts NDC codes (auto-detected by API)", async () => {
         mockFetch.mockResolvedValueOnce(
           apiResponse({
             set_id: "abc123",
@@ -602,21 +572,10 @@ describe("Endpoint lookup methods", () => {
           })
         );
 
-        await client.fdaLabels.lookupByNdc("0045-0502-60");
+        await client.fdaLabels.lookup("0045-0502-60");
 
         const [url] = mockFetch.mock.calls[0]!;
-        expect(url).toBe(
-          "https://api.fhirfly.io/v1/fda-labels/ndc/0045-0502-60"
-        );
-      });
-
-      it("encodes NDC codes correctly", async () => {
-        mockFetch.mockResolvedValueOnce(apiResponse({ set_id: "abc" }));
-
-        await client.fdaLabels.lookupByNdc("0045-0502-60");
-
-        const [url] = mockFetch.mock.calls[0]!;
-        expect(url).toContain("0045-0502-60");
+        expect(url).toBe("https://api.fhirfly.io/v1/fda-label/0045-0502-60");
       });
     });
 
@@ -627,7 +586,17 @@ describe("Endpoint lookup methods", () => {
         await client.fdaLabels.lookupMany(["abc123", "def456"]);
 
         const [url] = mockFetch.mock.calls[0]!;
-        expect(url).toBe("https://api.fhirfly.io/v1/fda-labels/_batch");
+        expect(url).toBe("https://api.fhirfly.io/v1/fda-label/_batch");
+      });
+
+      it("sends identifiers in request body", async () => {
+        mockFetch.mockResolvedValueOnce(batchResponse([]));
+
+        await client.fdaLabels.lookupMany(["abc123", "def456"]);
+
+        const [, opts] = mockFetch.mock.calls[0]!;
+        const body = JSON.parse(opts.body);
+        expect(body.identifiers).toEqual(["abc123", "def456"]);
       });
     });
   });
