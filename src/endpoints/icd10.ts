@@ -16,70 +16,45 @@ export class Icd10Endpoint {
   constructor(private readonly http: HttpClient) {}
 
   /**
-   * Look up a single ICD-10-CM code (diagnoses).
+   * Look up a single ICD-10 code (CM or PCS).
    *
-   * @param code - ICD-10-CM code (e.g., "E11.9")
+   * The API auto-detects whether the code is CM (diagnoses) or PCS (procedures)
+   * based on the code format.
+   *
+   * @param code - ICD-10 code (e.g., "E11.9" for CM, "02HA0QZ" for PCS)
    * @param options - Response shape and include options
    * @returns ICD-10 data
    *
    * @example
    * ```ts
-   * const icd = await client.icd10.lookupCm("E11.9");
-   * console.log(icd.data.description); // "Type 2 diabetes mellitus without complications"
+   * // Diagnosis code (CM)
+   * const diagnosis = await client.icd10.lookup("E11.9");
+   * console.log(diagnosis.data.description); // "Type 2 diabetes mellitus without complications"
+   *
+   * // Procedure code (PCS)
+   * const procedure = await client.icd10.lookup("02HA0QZ");
+   * console.log(procedure.data.description);
    * ```
    */
-  async lookupCm(code: string, options?: LookupOptions): Promise<ApiResponse<Icd10Data>> {
-    return this.http.get<ApiResponse<Icd10Data>>(`/v1/icd10/cm/${encodeURIComponent(code)}`, options);
+  async lookup(code: string, options?: LookupOptions): Promise<ApiResponse<Icd10Data>> {
+    return this.http.get<ApiResponse<Icd10Data>>(`/v1/icd10/${encodeURIComponent(code)}`, options);
   }
 
   /**
-   * Look up a single ICD-10-PCS code (procedures).
+   * Look up multiple ICD-10 codes in a single request.
    *
-   * @param code - ICD-10-PCS code (e.g., "0BJ08ZZ")
-   * @param options - Response shape and include options
-   * @returns ICD-10 data
+   * Codes can be a mix of CM (diagnoses) and PCS (procedures).
    *
-   * @example
-   * ```ts
-   * const icd = await client.icd10.lookupPcs("0BJ08ZZ");
-   * console.log(icd.data.description);
-   * ```
-   */
-  async lookupPcs(code: string, options?: LookupOptions): Promise<ApiResponse<Icd10Data>> {
-    return this.http.get<ApiResponse<Icd10Data>>(`/v1/icd10/pcs/${encodeURIComponent(code)}`, options);
-  }
-
-  /**
-   * Look up multiple ICD-10-CM codes in a single request.
-   *
-   * @param codes - Array of ICD-10-CM codes (max 500)
+   * @param codes - Array of ICD-10 codes (max 500)
    * @param options - Response shape, include, and batch options
    * @returns Batch response with results for each code
    */
-  async lookupCmMany(
+  async lookupMany(
     codes: string[],
     options?: BatchLookupOptions
   ): Promise<BatchResponse<Icd10Data>> {
     return this.http.post<BatchResponse<Icd10Data>>(
-      "/v1/icd10/cm/_batch",
-      { codes },
-      options
-    );
-  }
-
-  /**
-   * Look up multiple ICD-10-PCS codes in a single request.
-   *
-   * @param codes - Array of ICD-10-PCS codes (max 500)
-   * @param options - Response shape, include, and batch options
-   * @returns Batch response with results for each code
-   */
-  async lookupPcsMany(
-    codes: string[],
-    options?: BatchLookupOptions
-  ): Promise<BatchResponse<Icd10Data>> {
-    return this.http.post<BatchResponse<Icd10Data>>(
-      "/v1/icd10/pcs/_batch",
+      "/v1/icd10/_batch",
       { codes },
       options
     );

@@ -56,10 +56,12 @@ export interface ApiResponse<T> {
  * Batch response item - either success or not found.
  */
 export interface BatchResultItem<T> {
-  code: string;
-  found: boolean;
+  /** The input identifier that was looked up */
+  input: string;
+  /** Status of the lookup: "ok" for found, "not_found" for missing */
+  status: "ok" | "not_found";
+  /** The data if found */
   data?: T;
-  error?: string;
 }
 
 /**

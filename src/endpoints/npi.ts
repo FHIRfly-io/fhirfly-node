@@ -53,7 +53,7 @@ export class NpiEndpoint {
   ): Promise<BatchResponse<NpiData>> {
     return this.http.post<BatchResponse<NpiData>>(
       "/v1/npi/_batch",
-      { codes: npis },
+      { npis },
       options
     );
   }

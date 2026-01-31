@@ -16,53 +16,46 @@ export class FdaLabelsEndpoint {
   constructor(private readonly http: HttpClient) {}
 
   /**
-   * Look up FDA label by Set ID.
+   * Look up FDA label by identifier (Set ID, NDC, or RxCUI).
    *
-   * @param setId - FDA SPL Set ID
+   * The API auto-detects the identifier type based on format.
+   *
+   * @param identifier - FDA SPL Set ID, NDC code, or RxCUI
    * @param options - Response shape and include options
    * @returns FDA Label data
    *
    * @example
    * ```ts
+   * // By Set ID
    * const label = await client.fdaLabels.lookup("abc123-def456");
-   * console.log(label.data.indications_and_usage);
+   *
+   * // By NDC
+   * const label = await client.fdaLabels.lookup("0069-0151-01");
+   *
+   * // By RxCUI
+   * const label = await client.fdaLabels.lookup("404773");
    * ```
    */
-  async lookup(setId: string, options?: LookupOptions): Promise<ApiResponse<FdaLabelData>> {
-    return this.http.get<ApiResponse<FdaLabelData>>(`/v1/fda-labels/${encodeURIComponent(setId)}`, options);
+  async lookup(identifier: string, options?: LookupOptions): Promise<ApiResponse<FdaLabelData>> {
+    return this.http.get<ApiResponse<FdaLabelData>>(`/v1/fda-label/${encodeURIComponent(identifier)}`, options);
   }
 
   /**
-   * Look up FDA label by NDC code.
+   * Look up multiple FDA labels by identifiers in a single request.
    *
-   * @param ndc - NDC code
-   * @param options - Response shape and include options
-   * @returns FDA Label data
+   * Identifiers can be Set IDs, NDC codes, or RxCUIs (mixed).
    *
-   * @example
-   * ```ts
-   * const label = await client.fdaLabels.lookupByNdc("0069-0151-01");
-   * console.log(label.data.product_name);
-   * ```
-   */
-  async lookupByNdc(ndc: string, options?: LookupOptions): Promise<ApiResponse<FdaLabelData>> {
-    return this.http.get<ApiResponse<FdaLabelData>>(`/v1/fda-labels/ndc/${encodeURIComponent(ndc)}`, options);
-  }
-
-  /**
-   * Look up multiple FDA labels by Set IDs in a single request.
-   *
-   * @param setIds - Array of Set IDs (max 500)
+   * @param identifiers - Array of identifiers (max 500)
    * @param options - Response shape, include, and batch options
-   * @returns Batch response with results for each Set ID
+   * @returns Batch response with results for each identifier
    */
   async lookupMany(
-    setIds: string[],
+    identifiers: string[],
     options?: BatchLookupOptions
   ): Promise<BatchResponse<FdaLabelData>> {
     return this.http.post<BatchResponse<FdaLabelData>>(
-      "/v1/fda-labels/_batch",
-      { codes: setIds },
+      "/v1/fda-label/_batch",
+      { identifiers },
       options
     );
   }
