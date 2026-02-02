@@ -53,26 +53,30 @@ export interface ApiResponse<T> {
 }
 
 /**
- * Batch response item - either success or not found.
+ * Batch response item - success, not found, or invalid input.
  */
 export interface BatchResultItem<T> {
   /** The input identifier that was looked up */
   input: string;
-  /** Status of the lookup: "ok" for found, "not_found" for missing */
-  status: "ok" | "not_found";
+  /** Status of the lookup */
+  status: "ok" | "not_found" | "invalid";
   /** The data if found */
   data?: T;
+  /** Error message if status is "invalid" */
+  error?: string;
 }
 
 /**
  * Batch response wrapper.
  */
 export interface BatchResponse<T> {
+  /** Number of items in results */
+  count: number;
+  /** Batch lookup results */
   results: BatchResultItem<T>[];
-  meta: ResponseMeta & {
-    total: number;
-    found: number;
-    not_found: number;
+  /** Response metadata */
+  meta: {
+    legal: LegalInfo;
   };
 }
 

@@ -45,7 +45,7 @@ export class RxNormEndpoint {
   ): Promise<BatchResponse<RxNormData>> {
     return this.http.post<BatchResponse<RxNormData>>(
       "/v1/rxnorm/_batch",
-      { codes: rxcuis },
+      { rxcuis },
       options
     );
   }

@@ -32,16 +32,12 @@ function apiResponse<T>(data: T) {
   });
 }
 
-function batchResponse<T>(results: Array<{ input: string; status: "ok" | "not_found"; data?: T }>) {
+function batchResponse<T>(results: Array<{ input: string; status: "ok" | "not_found" | "invalid"; data?: T; error?: string }>) {
   return jsonResponse({
+    count: results.length,
     results,
     meta: {
       legal: { license: "public_domain" },
-      shape: "standard",
-      api_version: "1.0",
-      total: results.length,
-      found: results.filter((r) => r.status === "ok").length,
-      not_found: results.filter((r) => r.status === "not_found").length,
     },
   });
 }
@@ -181,7 +177,7 @@ describe("Endpoint lookup methods", () => {
         expect(url).toContain("?shape=compact");
       });
 
-      it("returns batch response with found and not_found counts", async () => {
+      it("returns batch response with count and status for each result", async () => {
         mockFetch.mockResolvedValueOnce(
           batchResponse([
             { input: "123", status: "ok", data: { ndc: "123" } },
@@ -191,11 +187,10 @@ describe("Endpoint lookup methods", () => {
 
         const result = await client.ndc.lookupMany(["123", "456"]);
 
+        expect(result.count).toBe(2);
         expect(result.results).toHaveLength(2);
         expect(result.results[0]!.status).toBe("ok");
         expect(result.results[1]!.status).toBe("not_found");
-        expect(result.meta.found).toBe(1);
-        expect(result.meta.not_found).toBe(1);
       });
     });
   });
