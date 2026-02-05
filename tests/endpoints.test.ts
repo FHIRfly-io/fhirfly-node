@@ -858,6 +858,210 @@ describe("Endpoint lookup methods", () => {
 
         await expect(client.connectivity.lookup("invalid")).rejects.toThrow(ValidationError);
       });
+
+      it("handles organization provider", async () => {
+        mockFetch.mockResolvedValueOnce(
+          jsonResponse({
+            npi: "9876543210",
+            provider_summary: {
+              name: "Test Health System",
+              entity_type: "organization" as const,
+              primary_taxonomy: "282N00000X",
+            },
+            connectivity_targets: [],
+            meta: { data_as_of: "2026-02-05T00:00:00Z", disclaimer: "Test" },
+          })
+        );
+
+        const result = await client.connectivity.lookup("9876543210");
+
+        expect(result.provider_summary.entity_type).toBe("organization");
+        expect(result.provider_summary.name).toBe("Test Health System");
+      });
+
+      it("handles multiple targets with multiple endpoints", async () => {
+        mockFetch.mockResolvedValueOnce(
+          jsonResponse({
+            npi: "1234567890",
+            provider_summary: { name: "Dr. Test", entity_type: "individual" },
+            connectivity_targets: [
+              {
+                target_id: "target_a",
+                name: "Health System A",
+                type: "health_system" as const,
+                link_type: "employed_by" as const,
+                link_confidence: "high" as const,
+                endpoints: [
+                  {
+                    endpoint_id: "ep1",
+                    type: "fhir_r4" as const,
+                    url: "https://fhir-a.example.org/r4",
+                    scope: "production" as const,
+                    status: "active" as const,
+                    evidence_summary: {
+                      latest_verification: "http_probe",
+                      verification_count: 10,
+                      first_seen: "2025-01-01T00:00:00Z",
+                      sources: ["http_probe"],
+                    },
+                  },
+                  {
+                    endpoint_id: "ep2",
+                    type: "direct" as const,
+                    url: "provider@direct.health-a.org",
+                    scope: "production" as const,
+                    status: "active" as const,
+                    evidence_summary: {
+                      latest_verification: "manual_curation",
+                      verification_count: 1,
+                      first_seen: "2025-06-01T00:00:00Z",
+                      sources: ["manual_curation"],
+                    },
+                  },
+                ],
+              },
+              {
+                target_id: "target_b",
+                name: "Clinic B",
+                type: "practice" as const,
+                link_type: "affiliated" as const,
+                link_confidence: "medium" as const,
+                endpoints: [
+                  {
+                    endpoint_id: "ep3",
+                    type: "fhir_stu3" as const,
+                    url: "https://fhir-b.example.org/stu3",
+                    scope: "production" as const,
+                    status: "active" as const,
+                    evidence_summary: {
+                      latest_verification: "http_probe",
+                      verification_count: 5,
+                      first_seen: "2025-03-01T00:00:00Z",
+                      sources: ["http_probe"],
+                    },
+                  },
+                ],
+              },
+            ],
+            meta: { data_as_of: "2026-02-05T00:00:00Z", disclaimer: "Test" },
+          })
+        );
+
+        const result = await client.connectivity.lookup("1234567890");
+
+        expect(result.connectivity_targets).toHaveLength(2);
+        expect(result.connectivity_targets[0].endpoints).toHaveLength(2);
+        expect(result.connectivity_targets[0].endpoints[1].type).toBe("direct");
+        expect(result.connectivity_targets[1].type).toBe("practice");
+        expect(result.connectivity_targets[1].link_confidence).toBe("medium");
+      });
+
+      it("handles endpoint with auth requirements", async () => {
+        mockFetch.mockResolvedValueOnce(
+          jsonResponse({
+            npi: "1234567890",
+            provider_summary: { name: "Test", entity_type: "individual" },
+            connectivity_targets: [
+              {
+                target_id: "target_a",
+                name: "Hospital A",
+                type: "facility" as const,
+                link_type: "practice_location" as const,
+                link_confidence: "high" as const,
+                endpoints: [
+                  {
+                    endpoint_id: "ep1",
+                    type: "fhir_r4" as const,
+                    url: "https://fhir.hospital.org/r4",
+                    scope: "production" as const,
+                    status: "active" as const,
+                    auth_requirements: {
+                      registration_required: true,
+                      registration_url: "https://hospital.org/register",
+                      allowlist_required: true,
+                      notes: "Contact IT department for access",
+                    },
+                    fhir_metadata: {
+                      smart_config_url: "https://fhir.hospital.org/.well-known/smart-configuration",
+                      capabilities: ["launch-ehr", "launch-standalone", "client-confidential-asymmetric"],
+                      security: {
+                        oauth_authorize_url: "https://auth.hospital.org/authorize",
+                        oauth_token_url: "https://auth.hospital.org/token",
+                        requires_udap: true,
+                      },
+                    },
+                    evidence_summary: {
+                      latest_verification: "http_probe",
+                      verification_count: 24,
+                      first_seen: "2025-01-01T00:00:00Z",
+                      sources: ["manual_curation", "http_probe"],
+                    },
+                  },
+                ],
+              },
+            ],
+            meta: { data_as_of: "2026-02-05T00:00:00Z", disclaimer: "Test" },
+          })
+        );
+
+        const result = await client.connectivity.lookup("1234567890");
+        const endpoint = result.connectivity_targets[0].endpoints[0];
+
+        expect(endpoint.auth_requirements?.registration_required).toBe(true);
+        expect(endpoint.auth_requirements?.allowlist_required).toBe(true);
+        expect(endpoint.fhir_metadata?.security?.requires_udap).toBe(true);
+        expect(endpoint.fhir_metadata?.capabilities).toContain("client-confidential-asymmetric");
+      });
+
+      it("handles endpoint without optional availability", async () => {
+        mockFetch.mockResolvedValueOnce(
+          jsonResponse({
+            npi: "1234567890",
+            provider_summary: { name: "Test", entity_type: "individual" },
+            connectivity_targets: [
+              {
+                target_id: "target_a",
+                name: "New Provider",
+                type: "practice" as const,
+                link_type: "organization_npi" as const,
+                link_confidence: "high" as const,
+                endpoints: [
+                  {
+                    endpoint_id: "ep1",
+                    type: "fhir_r4" as const,
+                    url: "https://fhir.newprovider.org/r4",
+                    scope: "production" as const,
+                    status: "unverified" as const,
+                    evidence_summary: {
+                      latest_verification: "manual_curation",
+                      verification_count: 1,
+                      first_seen: "2026-02-01T00:00:00Z",
+                      sources: ["manual_curation"],
+                    },
+                  },
+                ],
+              },
+            ],
+            meta: { data_as_of: "2026-02-05T00:00:00Z", disclaimer: "Test" },
+          })
+        );
+
+        const result = await client.connectivity.lookup("1234567890");
+        const endpoint = result.connectivity_targets[0].endpoints[0];
+
+        expect(endpoint.status).toBe("unverified");
+        expect(endpoint.availability).toBeUndefined();
+        expect(endpoint.fhir_metadata).toBeUndefined();
+        expect(endpoint.auth_requirements).toBeUndefined();
+      });
+
+      it("throws AuthenticationError for 401 response", async () => {
+        mockFetch.mockResolvedValueOnce(
+          errorResponse(401, { error: "unauthorized", message: "Invalid API key" })
+        );
+
+        await expect(client.connectivity.lookup("1234567890")).rejects.toThrow(AuthenticationError);
+      });
     });
   });
 
