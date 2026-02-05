@@ -7,6 +7,7 @@ import { Icd10Endpoint } from "./endpoints/icd10.js";
 import { CvxEndpoint } from "./endpoints/cvx.js";
 import { MvxEndpoint } from "./endpoints/mvx.js";
 import { FdaLabelsEndpoint } from "./endpoints/fda-labels.js";
+import { ConnectivityEndpoint } from "./endpoints/connectivity.js";
 
 /**
  * Base configuration options shared by all auth modes.
@@ -155,6 +156,12 @@ export class Fhirfly {
   readonly fdaLabels: FdaLabelsEndpoint;
 
   /**
+   * Connectivity Intelligence lookups.
+   * Find FHIR endpoints, Direct addresses, and other connectivity options for providers.
+   */
+  readonly connectivity: ConnectivityEndpoint;
+
+  /**
    * Create a new FHIRfly client.
    *
    * @param config - Client configuration (API key or OAuth2 client credentials)
@@ -204,5 +211,6 @@ export class Fhirfly {
     this.cvx = new CvxEndpoint(this.http);
     this.mvx = new MvxEndpoint(this.http);
     this.fdaLabels = new FdaLabelsEndpoint(this.http);
+    this.connectivity = new ConnectivityEndpoint(this.http);
   }
 }

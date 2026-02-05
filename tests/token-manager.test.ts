@@ -197,13 +197,13 @@ describe("TokenManager", () => {
       clientId: "cid",
       clientSecret: "csec",
       tokenUrl: "https://example.com/oauth2/token",
-      scopes: ["ndc:read", "npi:read"],
+      scopes: ["ndc.read", "npi.read"],
     });
 
     await tm.getToken();
 
     const body = new URLSearchParams(mockFetch.mock.calls[0]![1].body);
-    expect(body.get("scope")).toBe("ndc:read npi:read");
+    expect(body.get("scope")).toBe("ndc.read npi.read");
   });
 
   it("does not send scope param when scopes is empty", async () => {

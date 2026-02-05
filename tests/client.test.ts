@@ -40,7 +40,7 @@ describe("Fhirfly", () => {
       const client = new Fhirfly({
         clientId: "ffly_client_test",
         clientSecret: "ffly_secret_test",
-        scopes: ["ndc:read", "npi:read"],
+        scopes: ["ndc.read", "npi.read"],
       });
       expect(client).toBeDefined();
     });

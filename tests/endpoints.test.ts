@@ -723,6 +723,145 @@ describe("Endpoint lookup methods", () => {
   });
 
   // ===========================================================================
+  // Connectivity Endpoint
+  // ===========================================================================
+  describe("Connectivity endpoint", () => {
+    describe("lookup", () => {
+      it("makes GET request to correct URL", async () => {
+        mockFetch.mockResolvedValueOnce(
+          jsonResponse({
+            npi: "1234567890",
+            provider_summary: {
+              name: "Dr. John Smith",
+              entity_type: "individual",
+            },
+            connectivity_targets: [],
+            meta: {
+              data_as_of: "2026-02-05T00:00:00Z",
+              disclaimer: "Test disclaimer",
+            },
+          })
+        );
+
+        await client.connectivity.lookup("1234567890");
+
+        const [url, opts] = mockFetch.mock.calls[0]!;
+        expect(url).toBe("https://api.fhirfly.io/v1/npi/1234567890/connectivity");
+        expect(opts.method).toBe("GET");
+      });
+
+      it("encodes special characters in NPI", async () => {
+        mockFetch.mockResolvedValueOnce(
+          jsonResponse({
+            npi: "123/456",
+            provider_summary: { name: "Test", entity_type: "unknown" },
+            connectivity_targets: [],
+            meta: { data_as_of: "2026-02-05T00:00:00Z", disclaimer: "" },
+          })
+        );
+
+        await client.connectivity.lookup("123/456");
+
+        const [url] = mockFetch.mock.calls[0]!;
+        expect(url).toContain("123%2F456");
+      });
+
+      it("returns parsed connectivity data", async () => {
+        const mockData = {
+          npi: "1234567890",
+          provider_summary: {
+            name: "Dr. Jane Smith",
+            entity_type: "individual" as const,
+            primary_taxonomy: "207R00000X",
+            primary_taxonomy_desc: "Internal Medicine",
+          },
+          connectivity_targets: [
+            {
+              target_id: "target_test",
+              name: "Test Health System",
+              type: "health_system" as const,
+              link_type: "employed_by" as const,
+              link_confidence: "high" as const,
+              ehr_vendor: "Epic",
+              network_participation: ["CommonWell"],
+              endpoints: [
+                {
+                  endpoint_id: "ep123",
+                  type: "fhir_r4" as const,
+                  url: "https://fhir.test.org/r4",
+                  scope: "production" as const,
+                  status: "active" as const,
+                  last_verified_at: "2026-02-01T00:00:00Z",
+                  availability: {
+                    percentage: 99.2,
+                    probe_count: 48,
+                    last_checked: "2026-02-05T00:00:00Z",
+                    last_successful: "2026-02-05T00:00:00Z",
+                    consecutive_failures: 0,
+                  },
+                  evidence_summary: {
+                    latest_verification: "http_probe",
+                    verification_count: 48,
+                    first_seen: "2025-06-15T00:00:00Z",
+                    sources: ["manual_curation", "http_probe"],
+                  },
+                },
+              ],
+            },
+          ],
+          meta: {
+            data_as_of: "2026-02-05T12:00:00Z",
+            disclaimer: "Connectivity information is provided as-is...",
+          },
+        };
+
+        mockFetch.mockResolvedValueOnce(jsonResponse(mockData));
+
+        const result = await client.connectivity.lookup("1234567890");
+
+        expect(result.npi).toBe("1234567890");
+        expect(result.provider_summary.name).toBe("Dr. Jane Smith");
+        expect(result.connectivity_targets).toHaveLength(1);
+        expect(result.connectivity_targets[0].name).toBe("Test Health System");
+        expect(result.connectivity_targets[0].endpoints).toHaveLength(1);
+        expect(result.connectivity_targets[0].endpoints[0].type).toBe("fhir_r4");
+        expect(result.connectivity_targets[0].endpoints[0].availability?.percentage).toBe(99.2);
+      });
+
+      it("handles empty connectivity targets", async () => {
+        mockFetch.mockResolvedValueOnce(
+          jsonResponse({
+            npi: "1234567890",
+            provider_summary: { name: "Test", entity_type: "individual" },
+            connectivity_targets: [],
+            meta: { data_as_of: "2026-02-05T00:00:00Z", disclaimer: "Test" },
+          })
+        );
+
+        const result = await client.connectivity.lookup("1234567890");
+
+        expect(result.connectivity_targets).toEqual([]);
+      });
+
+      it("throws NotFoundError for 404 response", async () => {
+        mockFetch.mockResolvedValueOnce(
+          errorResponse(404, { error: "not_found", message: "NPI not found" })
+        );
+
+        await expect(client.connectivity.lookup("0000000000")).rejects.toThrow(NotFoundError);
+      });
+
+      it("throws ValidationError for 400 response", async () => {
+        mockFetch.mockResolvedValueOnce(
+          errorResponse(400, { error: "bad_request", message: "Invalid NPI format" })
+        );
+
+        await expect(client.connectivity.lookup("invalid")).rejects.toThrow(ValidationError);
+      });
+    });
+  });
+
+  // ===========================================================================
   // Request Headers
   // ===========================================================================
   describe("Request headers", () => {

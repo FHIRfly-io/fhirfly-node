@@ -99,4 +99,14 @@ export type {
   FdaLabelFull,
   FdaLabelData,
   FdaLabelSearchParams,
+  // Connectivity
+  ProviderSummary,
+  FhirMetadata,
+  EndpointAuthRequirements,
+  EndpointAvailability,
+  EvidenceSummary,
+  ConnectivityEndpointData,
+  ConnectivityTargetData,
+  ConnectivityMeta,
+  NpiConnectivityData,
 } from "./types/index.js";

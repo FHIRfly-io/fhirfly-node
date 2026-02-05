@@ -95,3 +95,16 @@ export type {
   FdaLabelData,
   FdaLabelSearchParams,
 } from "./fda-labels.js";
+
+// Connectivity types
+export type {
+  ProviderSummary,
+  FhirMetadata,
+  EndpointAuthRequirements,
+  EndpointAvailability,
+  EvidenceSummary,
+  ConnectivityEndpointData,
+  ConnectivityTargetData,
+  ConnectivityMeta,
+  NpiConnectivityData,
+} from "./connectivity.js";
