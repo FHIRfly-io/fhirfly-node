@@ -23,6 +23,10 @@ export interface ProviderSummary {
  * FHIR-specific metadata for an endpoint.
  */
 export interface FhirMetadata {
+  /** FHIR version (e.g., "4.0.1") */
+  version?: string;
+  /** Supported content types (e.g., ["application/fhir+json"]) */
+  supported_formats?: string[];
   /** URL to SMART configuration */
   smart_config_url?: string;
   /** SMART launch capabilities */
