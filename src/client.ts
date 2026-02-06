@@ -8,6 +8,7 @@ import { CvxEndpoint } from "./endpoints/cvx.js";
 import { MvxEndpoint } from "./endpoints/mvx.js";
 import { FdaLabelsEndpoint } from "./endpoints/fda-labels.js";
 import { ConnectivityEndpoint } from "./endpoints/connectivity.js";
+import { SnomedEndpoint } from "./endpoints/snomed.js";
 
 /**
  * Base configuration options shared by all auth modes.
@@ -162,6 +163,12 @@ export class Fhirfly {
   readonly connectivity: ConnectivityEndpoint;
 
   /**
+   * SNOMED CT IPS (International Patient Set) lookups.
+   * Look up clinical concepts from the SNOMED CT IPS free set (~12K concepts, CC BY 4.0).
+   */
+  readonly snomed: SnomedEndpoint;
+
+  /**
    * Create a new FHIRfly client.
    *
    * @param config - Client configuration (API key or OAuth2 client credentials)
@@ -212,5 +219,6 @@ export class Fhirfly {
     this.mvx = new MvxEndpoint(this.http);
     this.fdaLabels = new FdaLabelsEndpoint(this.http);
     this.connectivity = new ConnectivityEndpoint(this.http);
+    this.snomed = new SnomedEndpoint(this.http);
   }
 }

@@ -1,4 +1,5 @@
 import type { DisplayField } from "./common.js";
+import type { SnomedEnrichmentStandard, SnomedEnrichmentFull } from "./snomed.js";
 
 /**
  * RxNorm term type (TTY).
@@ -46,12 +47,14 @@ export interface RxNormStandard extends RxNormCompact {
     rxcui: string;
     name: string;
   }>;
+  /** SNOMED CT mappings (added by enrichment) */
+  snomed?: SnomedEnrichmentStandard[];
 }
 
 /**
  * RxNorm lookup result - full shape.
  */
-export interface RxNormFull extends RxNormStandard {
+export interface RxNormFull extends Omit<RxNormStandard, "snomed"> {
   dose_form?: {
     rxcui: string;
     name: string;
@@ -67,6 +70,8 @@ export interface RxNormFull extends RxNormStandard {
     relation: string;
   }>;
   ndcs?: string[];
+  /** SNOMED CT mappings with FHIR coding (added by enrichment) */
+  snomed?: SnomedEnrichmentFull[];
 }
 
 /**

@@ -96,6 +96,22 @@ export type {
   FdaLabelSearchParams,
 } from "./fda-labels.js";
 
+// SNOMED types
+export type {
+  IpsCategory,
+  SnomedConcept,
+  SnomedMappingType,
+  SnomedMappingSourceSystem,
+  SnomedMappingSource,
+  SnomedReverseMapping,
+  SnomedReverseMappingData,
+  SnomedBatchResultItem,
+  SnomedSearchParams,
+  SnomedCategoriesResponse,
+  SnomedEnrichmentStandard,
+  SnomedEnrichmentFull,
+} from "./snomed.js";
+
 // Connectivity types
 export type {
   ProviderSummary,

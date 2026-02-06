@@ -1,4 +1,5 @@
 import type { DisplayField } from "./common.js";
+import type { SnomedEnrichmentStandard, SnomedEnrichmentFull } from "./snomed.js";
 
 /**
  * Active ingredient in a drug product.
@@ -38,12 +39,14 @@ export interface NdcStandard extends NdcCompact {
   active_ingredients: ActiveIngredient[];
   dea_schedule?: string;
   marketing_status?: string;
+  /** SNOMED CT mappings (derived via RxNorm, added by enrichment) */
+  snomed?: SnomedEnrichmentStandard[];
 }
 
 /**
  * NDC lookup result - full shape.
  */
-export interface NdcFull extends NdcStandard {
+export interface NdcFull extends Omit<NdcStandard, "snomed"> {
   application_number?: string;
   product_type?: string;
   marketing_start_date?: string;
@@ -51,6 +54,8 @@ export interface NdcFull extends NdcStandard {
   listing_expiration_date?: string;
   pharm_class?: string[];
   packaging?: NdcPackaging[];
+  /** SNOMED CT mappings with FHIR coding (derived via RxNorm, added by enrichment) */
+  snomed?: SnomedEnrichmentFull[];
 }
 
 /**

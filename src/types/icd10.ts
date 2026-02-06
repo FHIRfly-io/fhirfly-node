@@ -1,4 +1,5 @@
 import type { DisplayField } from "./common.js";
+import type { SnomedEnrichmentStandard, SnomedEnrichmentFull } from "./snomed.js";
 
 /**
  * ICD-10 code type.
@@ -29,12 +30,14 @@ export interface Icd10Standard extends Icd10Compact {
   /** ICD-10-PCS specific */
   body_system?: string;
   root_operation?: string;
+  /** SNOMED CT mappings (ICD-10-CM only, added by enrichment) */
+  snomed?: SnomedEnrichmentStandard[];
 }
 
 /**
  * ICD-10 lookup result - full shape.
  */
-export interface Icd10Full extends Icd10Standard {
+export interface Icd10Full extends Omit<Icd10Standard, "snomed"> {
   /** ICD-10-CM specific */
   includes?: string[];
   excludes1?: string[];
@@ -48,6 +51,8 @@ export interface Icd10Full extends Icd10Standard {
   /** Effective dates */
   effective_date?: string;
   end_date?: string;
+  /** SNOMED CT mappings with FHIR coding (ICD-10-CM only, added by enrichment) */
+  snomed?: SnomedEnrichmentFull[];
 }
 
 /**
